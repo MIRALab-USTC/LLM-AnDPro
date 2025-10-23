@@ -301,7 +301,7 @@ class AnDProAdaptiveSnapKVCluster():
         self.window_size = window_size
         self.kernel_size = kernel_size
         self.pooling = pooling
-        self.base_capacity = base_capacity - window_size
+        self.base_capacity = base_capacity #- window_size
         self.floor_ratio = floor_alpha
         self.floor_capacity = int(self.base_capacity * self.floor_ratio)
         self.adaptive_capacity = self.base_capacity - self.floor_capacity
@@ -582,7 +582,7 @@ class AnDProAdaptiveSnapKVCluster():
                 weight = attn_weights[:, :, i, :].unsqueeze(-1) # weight: [1, num_heads, q_len, 1]
                 value_states_weighted = value_states * weight # value_states_weighted: [1, num_heads, q_len, head_dim]
                 
-                value_states_chunk = value_states_weighted.view(num_heads, -1, self.chunk_size, head_dim).sum(dim=-2) # value_states_chunk: [num_heads, q_len//chunk_size, head_dim]
+                value_states_chunk = value_states_weighted.view(num_heads, -1, self.chunk_size, head_dim).sum(dim=-2) # value_states_chunk: [num_heads, q_len//chunk_size, chunk_size, head_dim]
                 num_heads, q_len_chunk, head_dim = value_states_chunk.shape
                 
                 mask = drop_indices.unsqueeze(-1).expand(-1, -1, head_dim)
@@ -597,7 +597,7 @@ class AnDProAdaptiveSnapKVCluster():
             num_preserved += num_to_preserve
             preserve_indices = ~ drop_indices
             assert num_preserved == preserve_indices.sum().item()
-            assert num_preserved <= num_heads * self.base_capacity
+            assert num_preserved == num_heads * self.base_capacity // self.chunk_size
             
         else:
             pad_len = (self.chunk_size - (q_len % self.chunk_size)) % self.chunk_size
@@ -643,7 +643,6 @@ class AnDProAdaptiveSnapKVCluster():
         # NOTE: compose as flatten view
         heads_key_states = torch.cat(heads_key_states, dim=0)
         heads_value_states = torch.cat(heads_value_states, dim=0)
-        #import pdb; pdb.set_trace()
         return heads_key_states,heads_value_states
 
 
