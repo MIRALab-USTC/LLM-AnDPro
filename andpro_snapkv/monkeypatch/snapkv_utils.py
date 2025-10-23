@@ -591,7 +591,7 @@ class AnDProAdaptiveSnapKVCluster():
             
             proj_score = prods_with_dropvalue_window_mean
             proj_score[~ drop_indices] = - torch.inf 
-            num_to_preserve = num_heads * self.base_capacity - num_preserved
+            num_to_preserve = num_heads * self.base_capacity // self.chunk_size - num_preserved
             indices_to_preserve = torch.topk(proj_score.reshape(-1), k=num_to_preserve, dim=-1).indices
             drop_indices.view(-1)[indices_to_preserve] = False 
             num_preserved += num_to_preserve
@@ -643,7 +643,7 @@ class AnDProAdaptiveSnapKVCluster():
         # NOTE: compose as flatten view
         heads_key_states = torch.cat(heads_key_states, dim=0)
         heads_value_states = torch.cat(heads_value_states, dim=0)
-
+        #import pdb; pdb.set_trace()
         return heads_key_states,heads_value_states
 
 
